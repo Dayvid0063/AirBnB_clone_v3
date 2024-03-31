@@ -3,6 +3,7 @@
 Contains the class DBStorage
 """
 
+
 import models
 from models.amenity import Amenity
 from models.base_model import BaseModel, Base
@@ -70,6 +71,23 @@ class DBStorage:
         sess_factory = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(sess_factory)
         self.__session = Session
+
+    def get(self, cls, id):
+        """
+        Return the object based on the class and its ID,
+        or None if not found
+        """
+        obj = None
+        if cls is not None and issubclass(cls, BaseModel):
+            obj = self.__session.query(cls).get(id)
+        return obj
+
+    def count(self, cls=None):
+        """
+        Returns the number of objects in storage matching the given class.
+        If no class is passed, returns the count of all objects in storage
+        """
+        return len(self.all(cls))
 
     def close(self):
         """call remove() method on the private session attribute"""

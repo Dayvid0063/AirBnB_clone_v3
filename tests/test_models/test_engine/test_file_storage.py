@@ -3,6 +3,7 @@
 Contains the TestFileStorageDocs classes
 """
 
+
 from datetime import datetime
 import inspect
 import models
@@ -111,3 +112,33 @@ class TestFileStorage(unittest.TestCase):
         with open("file.json", "r") as f:
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
+
+    def test_get(self):
+        """Test the get method"""
+        storage = FileStorage()
+        obj = BaseModel()
+        storage.new(obj)
+        retrieved_obj = storage.get(BaseModel, obj.id)
+        self.assertIs(obj, retrieved_obj)
+
+    def test_get_returns_none_if_not_found(self):
+        """Test that get returns None if object not found"""
+        storage = FileStorage()
+        obj = storage.get(BaseModel, "non_existent_id")
+        self.assertIsNone(obj)
+
+    def test_count(self):
+        """Test the count method"""
+        storage = FileStorage()
+        initial_count = storage.count(BaseModel)
+        obj1 = BaseModel()
+        storage.new(obj1)
+        count_with_one_object = storage.count(BaseModel)
+        self.assertEqual(count_with_one_object, initial_count + 1)
+
+    def test_count_with_no_class(self):
+        """Test count method with no exact class."""
+        storage = FileStorage()
+        total_count = storage.count()
+        expected_count = len(storage.all().values())
+        self.assertEqual(total_count, expected_count)
