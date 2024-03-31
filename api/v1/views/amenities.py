@@ -10,22 +10,22 @@ from models import storage
 
 @app_views.route('/amenities',
                  methods=['GET'], strict_slashes=False)
-def get_all_amenities():
+def get_amenities():
     """attain the list of all Amenity obj"""
     amenities_ls = []
-    amenities = storage.all(Amenity)
-    for amenity in amenities.values():
+    amenities = storage.all(Amenity).values()
+    for amenity in amenities:
         amenities_ls.append(amenity.to_dict())
     return jsonify(amenities_ls)
 
 
 @app_views.route('/amenities/<amenity_id>',
                  methods=['GET'], strict_slashes=False)
-def get_amenity_id(amenity_id):
-    """attains the list of Amenities via ID"""
+def get_amenitie(amenity_id):
+    """attains amenitie obj"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        abort(404)
+        abort(404, "Amenity not found")
     return jsonify(amenities.to_dict())
 
 
@@ -39,7 +39,7 @@ def create_amenity():
     if "name" not in amenity_js:
         abort(400, 'Missing name')
     if len(amenity_js) != 1:
-        abort(400)
+        abort(404, "Amenity not found")
     new_amenity = Amenity(**amenity_js)
     storage.new(new_amenity)
     storage.save()
@@ -52,7 +52,7 @@ def update_amenity(amenity_id):
     """Updates amenity obj"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        abort(404)
+        (404, "Amenity not found")
     amenity_js = request.get_json()
     if amenity_js is None:
         abort(400, 'Not a JSON')
@@ -65,11 +65,11 @@ def update_amenity(amenity_id):
 
 @app_views.route('/amenities/<amenity_id>',
                  methods=['DELETE'], strict_slashes=False)
-def delete_amenity_id(amenity_id):
+def delete_amenity(amenity_id):
     """Deletes Amenities ID"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        abort(404)
+        abort(404, "Amenity not found")
     storage.delete(amenities)
     storage.save()
     return jsonify({}), 200
