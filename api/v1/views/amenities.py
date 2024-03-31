@@ -13,19 +13,19 @@ from models import storage
 def get_amenities():
     """attain the list of all Amenity obj"""
     amenities_ls = []
-    amenities = storage.all(Amenity).values()
-    for amenity in amenities:
+    amenities = storage.all(Amenity)
+    for amenity in amenities.values():
         amenities_ls.append(amenity.to_dict())
     return jsonify(amenities_ls)
 
 
 @app_views.route('/amenities/<amenity_id>',
                  methods=['GET'], strict_slashes=False)
-def get_amenitie(amenity_id):
-    """attains amenitie obj"""
+def get_amenity(amenity_id):
+    """attains the list of Amenities via ID"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        abort(404, "Amenity not found")
+        abort(404)
     return jsonify(amenities.to_dict())
 
 
@@ -39,7 +39,7 @@ def create_amenity():
     if "name" not in amenity_js:
         abort(400, 'Missing name')
     if len(amenity_js) != 1:
-        abort(404, "Amenity not found")
+        abort(400)
     new_amenity = Amenity(**amenity_js)
     storage.new(new_amenity)
     storage.save()
@@ -52,7 +52,7 @@ def update_amenity(amenity_id):
     """Updates amenity obj"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        (404, "Amenity not found")
+        abort(404)
     amenity_js = request.get_json()
     if amenity_js is None:
         abort(400, 'Not a JSON')
@@ -69,7 +69,7 @@ def delete_amenity(amenity_id):
     """Deletes Amenities ID"""
     amenities = storage.get(Amenity, amenity_id)
     if amenities is None:
-        abort(404, "Amenity not found")
+        abort(404)
     storage.delete(amenities)
     storage.save()
     return jsonify({}), 200
