@@ -93,8 +93,9 @@ def search_places():
     if not isinstance(data, dict):
         abort(400, description='Not a JSON')
 
-    places = set(storage.all("Place").values())
-    places_id = {place.id for place in places}
+    all_places = storage.all(Place).values()
+    places = []
+    places_id = []
 
     k_info = {
         'states': data.get('states', []),
@@ -107,21 +108,22 @@ def search_places():
             state = storage.get(State, state_id)
             if state:
                 for city in state.cities:
-                    new_places = set(city.places) - places_id
-                    places = places.union(new_places)
-                    places_id.update({place.id for place in new_places})
+                    new_places = [place for place in city.places
+                                  if place.id not in places_id]
+                    places.extend(new_places)
+                    places_id.extend([place.id for place in new_places])
 
     if k_info['cities']:
         for city_id in k_info['cities']:
             city = storage.get(City, city_id)
             if city:
-                new_places = set(city.places) - places_id
-                places = places.union(new_places)
-                places_id.update({place.id for place in new_places})
+                new_places = [place for place in city.places
+                              if place.id not in places_id]
+                places.extend(new_places)
+                places_id.extend([place.id for place in new_places])
 
     if not k_info['states'] and not k_info['cities']:
-        places = set(storage.all("Place").values())
-
+        places = all_places
     if k_info['amenities']:
         amenity_ids = set()
         for amenity_id in k_info['amenities']:
@@ -129,12 +131,12 @@ def search_places():
             if amenity:
                 amenity_ids.add(amenity_id)
 
-        rem_set = set()
+        diff_pl = []
         for place in places:
             place_amenities_ids = {amenity.id for amenity in place.amenities}
-            if not amenity_ids.issubset(place_amenities_ids):
-                rem_set.add(place)
-        places -= rem_set
+            if amenity_ids.issubset(place_amenities_ids):
+                diff_pl.append(place)
+        places = diff_pl
 
-    res = [place.to_dict() for place in places]
-    return jsonify(res)
+    result = [place.to_dict() for place in places]
+    return jsonify(result)
