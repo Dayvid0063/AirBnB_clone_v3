@@ -8,6 +8,7 @@ from models.place import Place
 from models.city import City
 from models.user import User
 from models import storage
+from models.state import State
 
 
 @app_views.route('/cities/<city_id>/places',
@@ -81,3 +82,39 @@ def delete_place(place_id):
     storage.delete(place)
     storage.save()
     return jsonify({}), 200
+
+
+@app_views.route('/places_search',
+                 methods=['POST'], strict_slashes=False)
+def places_search():
+    """Search for places"""
+    if not request.json:
+        abort(400, 'Not a JSON')
+
+    states = request.json.get('states', [])
+    cities = request.json.get('cities', [])
+    amenities = request.json.get('amenities', [])
+    p_res = []
+
+    if not states and not cities:
+        p_res = storage.all(Place).values()
+    else:
+        if states:
+            for state_id in states:
+                state = storage.get(State, state_id)
+                if state:
+                    for city in state.cities:
+                        p_res.extend(city.places)
+
+        if cities:
+            for city_id in cities:
+                city = storage.get(City, city_id)
+                if city:
+                    p_res.extend(city.places)
+
+    if amenities:
+        am_set = set(amenities)
+        p_res = [place for place in p_res if am_set.issubset(place.amenities)]
+
+    places_dict = [place.to_dict() for place in p_res]
+    return jsonify(places_dict)
